@@ -15,6 +15,11 @@ box testing from simple shell input/output.
 
 from suite import *
 
+import sys
+
+# Usage
+USAGE = "usage: python3 test.py [test <name> | explain [test]]"
+
 # Test path (usually ./)
 PATH = "./"
 SPACE = " "
@@ -29,7 +34,7 @@ NAME = "Basic test demo:"
 
 class TestFlawedExample(TestGroup):
 
-    TEST_NAME = "TestFlawedExample"
+    TEST_NAME = "FlawedExample"
 
     tests = [
         # 1
@@ -109,7 +114,7 @@ class TestFlawedExample(TestGroup):
 
 class TestCorrectExample(TestGroup):
 
-    TEST_NAME = "TestCorrectExample"
+    TEST_NAME = "CorrectExample"
 
     tests = [
         # 1
@@ -189,6 +194,8 @@ class TestCorrectExample(TestGroup):
 
 # Main
 if __name__ == '__main__':
+    # TODO: name appropriately
+    name = "Example Test Suite"
     # TODO: Assemble your test groups
     exampleFlawed = TestFlawedExample("FlawedExample", TestFlawedExample.tests)
     exampleCorrect = TestCorrectExample("CorrectExample", TestCorrectExample.tests)
@@ -197,9 +204,31 @@ if __name__ == '__main__':
         exampleFlawed,
         exampleCorrect
     ])
-    # Run the tests
-    if runner.setup("Example Test Suite", MAKEFILE):
-        # Compiled, can run
-        runner.run(NAME)
-    # Clean up afterwards
-    runner.teardown()
+    # Check the mode
+    # print("argc: {}, argv: {}".format(len(sys.argv), sys.argv))
+    if len(sys.argv) == 1:
+        # Run all tests (main use)
+        if runner.setup(name, MAKEFILE):
+            # Compiled, can run
+            runner.runAll(NAME)
+        # Clean up afterwards
+        runner.teardown()
+    elif sys.argv[1].lower() == "explain":
+        if len(sys.argv) == 2:
+            runner.explainAll(name)
+        elif len(sys.argv) == 3:
+            runner.explainOne(name, sys.argv[2])
+        else:
+            print(USAGE)
+    elif sys.argv[1].lower() == "test":
+        if len(sys.argv) == 3:
+            # Run all tests (main use)
+            if runner.setup(name, MAKEFILE):
+                # Compiled, can run
+                runner.runOne(name, sys.argv[2])
+            # Clean up afterwards
+            runner.teardown()
+        else:
+            print(USAGE)
+    else:
+        print(USAGE)

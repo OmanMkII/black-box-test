@@ -19,7 +19,7 @@ import os
 
 from colorama import Fore, Style
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 # Static environment types (expand later if necessary)
 MAKEFILE = "make"
@@ -31,7 +31,9 @@ CHECK_MAKE_B = "cut -f1 output"             # get file size (should be '\n')
 REMOVE = "rm"                               # delete error file
 GET_ERRNO = "echo $?"                       # get the last exit code (errno)
 
+# Formatting
 SPACE = " "
+BOLD = '\033[1m'
 
 class TestCase():
     """ An instance test case existing within a multitude of tests.
@@ -69,9 +71,9 @@ class TestCase():
         for this case.
         """
         self._name = name
+        self._stdin = stdin
         # Expected
-        self._input = input.split()
-        # self._input = input + SPACE + "> {}".format(stdout) + SPACE + "2> {}".format(stderr)
+        self._input = input
         self._errno = errno
         self._stdout = stdout
         self._stderr = stderr
@@ -85,8 +87,6 @@ class TestCase():
         """ Tests the stdout saved to local files. """
         with open(self._output, "r") as stdout, open(self._stdout, "r") as expected:
             if stdout.read() != expected.read():
-                # print("  Incorrect STDOUT:\n")
-                # print("  {}\n".format(stdout.read()))
                 return False
             else:
                 return True
@@ -95,8 +95,6 @@ class TestCase():
         """ Tests the stderr saved to local files. """
         with open(self._errlog, "r") as stderr, open(self._stderr, "r") as expected:
             if stderr.read() != expected.read():
-                # print("  Incorrect STDERR:\n")
-                # print("  {}\n".format(stderr.read()))
                 return False
             else:
                 return True
@@ -111,11 +109,32 @@ class TestCase():
 
     def run(self) -> None:
         """ Executes the script locally and saves all I/O to be tested later. """
-        p = subprocess.Popen(self._input,
-                stdout=open(self._output, "a"), stderr=open(self._errlog, "a"))
+        p = subprocess.Popen(self._input.split(),
+                stdout=open(self._output, "a"),
+                stderr=open(self._errlog, "a"))
         output, error = p.communicate()
         p.wait()
         self._status = p.returncode
+
+    def _printExplain(self) -> None:
+        """ Gets useful information from this test module for printable use. """
+        return self._input + \
+                (" < {}".format(self._stdin) if self._stdin != None else "") + \
+                (" > {}".format(self._output) if self._output != None else "") + \
+                (" 2> {}".format(self._errlog) if self._errlog != None else "")
+
+    def explain(self) -> None:
+        """ Explains how this test would operate from a command line call, letting
+        the user execute it themselves and see more of the outputs. Particularly
+        useful for debugging calls (in gdb, etc.) and generally comparing outputs
+        from directly executing.
+        """
+        print(BOLD + f"{Fore.YELLOW}TEST " + self._name + f"{Style.RESET_ALL}" + \
+                ":\n\n  {}\n".format(
+                TestCase._printExplain(self)))
+        print("  diff {} {}".format(self._output, self._stdout))
+        print("  diff {} {}".format(self._errlog, self._stderr))
+        print("\n  Expects exit code {}.\n\n".format(self._errno))
 
     def teardown(self) -> None:
         """ Destroys local copies unless explicitly labelled to save. """
@@ -141,28 +160,44 @@ class TestGroup:
         self._tests = tests
         self._results = [None for _ in tests]
 
-    def runAll(self):
+    def __iter__(self):
+        return self._tests.__iter__()
+
+    def runAll(self) -> []:
         """ Execute all existing tests and stores data locally. """
         for i, test in enumerate(self._tests):
             self._results[i] = test.run()
         return self._tests
 
-    def runTest(self, name: str):
+    def runTest(self, name: str) -> bool:
         """ Run a specific test that matches the given name. """
+        test = None
         for t in self._tests:
-            if t._name == name:
-                return t.run()
-        return None
+            print(t.name())
+            if t._name.split()[1] == name:
+                t.run()
+                test = t
+        return test
 
-    def explainAll(self):
-        # TODO: explain all tests, do not run
-        return None
+    def explainAll(self) -> None:
+        """ Explains every test within this group, letting the user understand
+        what exactly happens when they run.
+        """
+        for test in self._tests:
+            test.explain()
 
-    def explainTest(self, name: str):
-        # TODO: explain one test, do not run
-        return None
+    def explainTest(self, name: str) -> bool:
+        """ Explains a specific test within the main group of tests, giving the
+        user a way to replicate parts of it without running this module, returns
+        True iff the called test exists and was successfuly explained.
+        """
+        for test in self._tests:
+            if test._name == name:
+                test.explain()
+                return True
+        return False
 
-    def teardownAll(self):
+    def teardownAll(self) -> None:
         """ Removes all temporary data """
         for t in self._tests:
             t.teardown()
@@ -176,9 +211,9 @@ class TestSuite:
 
     # Coloured for your enjoyment
     RESULTS = {
-        "PASS!": '\033[1m' + f"{Fore.GREEN}PASS!{Style.RESET_ALL}" + '\033[0m',
-        "FAIL.": '\033[1m' + f"{Fore.YELLOW}FAIL.{Style.RESET_ALL}" + '\033[0m',
-        "ERROR": '\033[1m' + f"{Fore.BLUE}ERROR{Style.RESET_ALL}" + '\033[0m'
+        "PASS!": BOLD + f"{Fore.GREEN}PASS!{Style.RESET_ALL}",
+        "FAIL.": BOLD + f"{Fore.YELLOW}FAIL.{Style.RESET_ALL}",
+        "ERROR": BOLD + f"{Fore.BLUE}ERROR{Style.RESET_ALL}"
     }
 
     # Numbers
@@ -203,7 +238,7 @@ class TestSuite:
         print("-" * size)
 
     def _printResultLine(self, testName, result, dump,
-            size: int = 80, isErrno: bool = False):
+            size: int = 80, isErrno: bool = False) -> None:
         """ Prints the result of the test neatly with an error dump if given. """
         # spaced pass/fail
         output = testName + " " * (size - len(testName) - len(result) - 2)
@@ -233,11 +268,18 @@ class TestSuite:
             self._passed += 1
             TestSuite._printResultLine(self, result._name, "PASS!", None)
 
-    def _printFinal(self, size: int = 80) -> None:
+    def _printFinal(self, size: int = 80, explain: bool = False,
+            testName: str = None, notFound: bool = False) -> None:
         """ Print a summary of the test results. """
         print("-" * size)
-        print("{} tests run.".format(self._total))
-        print("{} / {} tests passed.".format(self._passed, self._total))
+        if not explain:
+            print("\n  {} tests run.".format(self._total))
+            print("  {} / {} tests passed.\n".format(self._passed, self._total))
+        else:
+            if notFound:
+                print("\b\n  Test '{}' not found!\n".format(testName))
+            else:
+                print("\n  {} tests explained: NO TESTS WERE RUN.\n".format(self._total))
         print("-" * size)
 
     def setup(self, name, type) -> bool:
@@ -256,8 +298,7 @@ class TestSuite:
                 return True
             else:
                 # Note: can't distinguish warnings from errors, fix it all!
-                print("Errors/warnings were detected, please fix them before \
-                        continuing:\n")
+                print("Errors/warnings were detected, please fix them before continuing:\n")
                 # Print all the makefile errors
                 with open("errlog") as errlog:
                     for line in errlog:
@@ -265,11 +306,10 @@ class TestSuite:
                 subprocess.call([REMOVE, "makelog", "errlog", "output"])
                 return False
 
-    def run(self, name: str) -> None:
+    def runAll(self, name: str) -> None:
         """ Executes the collection of tests and stores all results for a pretty
         output to the terminal.
         """
-        # TODO: add an explain option, prints the test I/O but DOESN'T execute
         # TODO: add an option to save test results/output to shell
         results = []
         j = 0
@@ -280,7 +320,46 @@ class TestSuite:
                 TestSuite._printTestResult(self, results[j])
                 # results[j].teardown()
                 j += 1
-        self._printFinal()
+        TestSuite._printFinal(self)
+
+    def runOne(self, name: str, testName: str) -> None:
+        """ Executes a specific test, or prints fail if it cannot be found. """
+        group, name = testName.split(".")
+        contains = False
+        # Find test
+        test = None
+        for g in self._groups:
+            # print("g._name: {}\ntestName: {}\nname: {}".format(g._name, testName, name))
+            print(g, g._tests)
+            if g._name == group and testName in g._tests:
+                test = g.runTest(name)
+        # Print test results
+        if test is None:
+            # print("Was None")
+            return None
+        else:
+            # print("Got something")
+            TestSuite._printTestResult(self, contains)
+            TestSuite._printFinal()
+
+    def explainAll(self, name: str) -> None:
+        """ Explains the collection of test groups without executing any of them,
+        can also be narrowed to explain a specific test.
+        """
+        self._printSetup(name)
+        for g in self._groups:
+            g.explainAll()
+        TestSuite._printFinal(self, explain=True)
+
+    def explainOne(self, name: str, testName: str) -> None:
+        """ Explain a single test """
+        self._printSetup(name)
+        for g in self._groups:
+            if g.explainTest(name):
+                TestSuite._printFinal(self, explain=True)
+                return
+        # TODO: couldn't find test
+        TestSuite._printFinal(self, explain=True, testName=testName, notFound=True)
 
     def teardown(self, removeAll = True) -> None:
         """ Cleans up any remaining files that are not wanted. """
