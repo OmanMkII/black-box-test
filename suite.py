@@ -32,8 +32,16 @@ REMOVE = "rm"                               # delete error file
 GET_ERRNO = "echo $?"                       # get the last exit code (errno)
 
 # Formatting
-SPACE = " "
+NEWLINE = '\n'
+SPACE = ' '
 BOLD = '\033[1m'
+
+# Coloured for your enjoyment
+RESULTS = {
+    "PASS!": BOLD + f"{Fore.GREEN}PASS!{Style.RESET_ALL}",
+    "FAIL.": BOLD + f"{Fore.YELLOW}FAIL.{Style.RESET_ALL}",
+    "ERROR": BOLD + f"{Fore.BLUE}ERROR{Style.RESET_ALL}"
+}
 
 class TestCase():
     """ An instance test case existing within a multitude of tests.
@@ -130,8 +138,7 @@ class TestCase():
         from directly executing.
         """
         print(BOLD + f"{Fore.YELLOW}TEST " + self._name + f"{Style.RESET_ALL}" + \
-                ":\n\n  {}\n".format(
-                TestCase._printExplain(self)))
+                ":\n\n  {}\n".format(TestCase._printExplain(self)))
         print("  diff {} {}".format(self._output, self._stdout))
         print("  diff {} {}".format(self._errlog, self._stderr))
         print("\n  Expects exit code {}.\n\n".format(self._errno))
@@ -143,6 +150,40 @@ class TestCase():
                     (REMOVE + SPACE + "{}.out".format(self._name)).split())
             subprocess.call(
                     (REMOVE + SPACE + "{}.err".format(self._name)).split())
+
+
+def printResultLine(testName, result, expected, dump, size: int = 80, isErrno: bool = False):
+    """ Prints the result of the test neatly with an error dump if given. """
+    # spaced pass/fail
+    output = testName + " " * (size - len(testName) - len(result) - 2)
+    output += RESULTS.get(result)
+    print(output)
+    # print relevant results
+    if isErrno:
+        # "dump" is actually errno in this case
+        print("\tExited with status {} (expected {})\n".format(expected, dump))
+    elif dump is not None:
+        # Incorrect outputs
+        with open(expected, "r") as e, open(dump, "r") as d:
+            print("  Expected:\t", e.read().rstrip(NEWLINE))
+            print("  Actual:\t", d.read().rstrip(NEWLINE), NEWLINE)
+
+def printTestResult(result: TestCase) -> bool:
+    """ Checks stdout, stderr, and exit code to ensure the program was run
+    correctly.
+    """
+    passed = False
+    if not result._testStderr():
+        printResultLine(result._name, "FAIL.", result._stderr, result._errlog)
+    elif not result._testStdout():
+        printResultLine(result._name, "FAIL.", result._stdout, result._output)
+    elif not result._testErrno():
+        printResultLine(result._name, "FAIL.",
+            result._status, result._errno, isErrno = True)
+    else:
+        passed = True
+        printResultLine(result._name, "PASS!", None, None)
+    return passed
 
 
 class TestGroup:
@@ -202,19 +243,58 @@ class TestGroup:
         for t in self._tests:
             t.teardown()
 
+    def teardownTest(self, test: str) -> bool:
+        """ Removes all temporary data for a specific test name. """
+        return test.teardown()
+
+    def printAllResults(self) -> None:
+        """ Prints output for all tests. """
+        passed = 0
+        for i, t in enumerate(self._tests):
+            self._results[i] = printTestResult(t)
+
+    def printSingleResult(self, test: str) -> bool:
+        """ Prints outputs for a single result. """
+        for t in self._tests:
+            if t._name == test:
+                self._results[i] = printTestResult(t)
+
+    def getPassed(self) -> int:
+        """ Returns a total of all tests passed """
+        num = 0
+        for i, t in enumerate(self._tests):
+            if self._results[i]:
+                num += 1
+        return num
+
+
+def printSetup(name: str, size: int = 80) -> None:
+    """ Prints a (semi) fancy welcome and description. """
+    print("-" * size)
+    print(name + "\n\nA bash terminal test environment for simple black box testing."
+        + "\nAuthor: Eamon O'Brien\nVersion: " + VERSION)
+    print("-" * size)
+
+def printFinal(passed: int, total: int, size: int = 80, explain: bool = False,
+        testName: str = None, notFound: bool = False) -> None:
+    """ Print a summary of the test results. """
+    print("-" * size)
+    if not explain:
+        print("\n  {} tests run.".format(total))
+        print("  {} / {} tests passed.\n".format(passed, total))
+    else:
+        if notFound:
+            print("\b\n  Test '{}' not found!\n".format(testName))
+        else:
+            print("\n  {} tests explained: NO TESTS WERE RUN.\n".format(total))
+    print("-" * size)
+
 
 class TestSuite:
     """ The main test suite for self set of tests, operates by running shell
     commands to compile the program and ensuring proper compilation, then comparing
     each output directly to evaluate their outputs.
     """
-
-    # Coloured for your enjoyment
-    RESULTS = {
-        "PASS!": BOLD + f"{Fore.GREEN}PASS!{Style.RESET_ALL}",
-        "FAIL.": BOLD + f"{Fore.YELLOW}FAIL.{Style.RESET_ALL}",
-        "ERROR": BOLD + f"{Fore.BLUE}ERROR{Style.RESET_ALL}"
-    }
 
     # Numbers
     _total = 0
@@ -230,61 +310,9 @@ class TestSuite:
             self._groups[i] = t
             self._total += len(t._tests)
 
-    def _printSetup(self, name: str, size: int = 80) -> None:
-        """ Prints a (semi) fancy welcome and description. """
-        print("-" * size)
-        print(name + "\n\nA bash terminal test environment for simple black box testing."
-                + "\nAuthor: Eamon O'Brien\nVersion: " + VERSION)
-        print("-" * size)
-
-    def _printResultLine(self, testName, result, dump,
-            size: int = 80, isErrno: bool = False) -> None:
-        """ Prints the result of the test neatly with an error dump if given. """
-        # spaced pass/fail
-        output = testName + " " * (size - len(testName) - len(result) - 2)
-        output += TestSuite.RESULTS.get(result)
-        print(output)
-        # print relevant results
-        if isErrno:
-            # "dump" is actually errno in this case
-            print("\tExited with status {}\n".format(dump))
-        elif dump is not None:
-            # Incorrect outputs
-            with open(dump, "r") as d:
-                print("  Expected:", d.read())
-
-    def _printTestResult(self, result: TestCase) -> None:
-        """ Checks stdout, stderr, and exit code to ensure the program was run
-        correctly.
-        """
-        if not result._testStderr():
-            TestSuite._printResultLine(self, result._name, "FAIL.", result._stderr)
-        elif not result._testStdout():
-            TestSuite._printResultLine(self, result._name, "FAIL.", result._stdout)
-        elif not result._testErrno():
-            TestSuite._printResultLine(self, result._name, "FAIL.",
-                result._status, isErrno = True)
-        else:
-            self._passed += 1
-            TestSuite._printResultLine(self, result._name, "PASS!", None)
-
-    def _printFinal(self, size: int = 80, explain: bool = False,
-            testName: str = None, notFound: bool = False) -> None:
-        """ Print a summary of the test results. """
-        print("-" * size)
-        if not explain:
-            print("\n  {} tests run.".format(self._total))
-            print("  {} / {} tests passed.\n".format(self._passed, self._total))
-        else:
-            if notFound:
-                print("\b\n  Test '{}' not found!\n".format(testName))
-            else:
-                print("\n  {} tests explained: NO TESTS WERE RUN.\n".format(self._total))
-        print("-" * size)
-
     def setup(self, name, type) -> bool:
         """ Sets up the environment with commands such as 'make [option]'. """
-        self._printSetup(name)
+        printSetup(name)
         if type == MAKEFILE:
             # Compile, suppress outputs
             subprocess.call(MAKEFILE, stdout=open("makelog", "w"),
@@ -313,14 +341,12 @@ class TestSuite:
         # TODO: add an option to save test results/output to shell
         results = []
         j = 0
-        for i, t in enumerate(self._groups):
-            # TODO: put results in ./deleteme instead
-            results.extend(t.runAll())
-            while j < len(results):
-                TestSuite._printTestResult(self, results[j])
-                # results[j].teardown()
-                j += 1
-        TestSuite._printFinal(self)
+        # Print all the results
+        for i, g in enumerate(self._groups):
+            results.extend(g.runAll())
+            g.printAllResults()
+            self._passed += g.getPassed()
+        printFinal(self._passed, self._total)
 
     def runOne(self, name: str, testName: str) -> None:
         """ Executes a specific test, or prints fail if it cannot be found. """
@@ -339,27 +365,28 @@ class TestSuite:
             return None
         else:
             # print("Got something")
-            TestSuite._printTestResult(self, contains)
-            TestSuite._printFinal()
+            printTestResult(contains)
+            printFinal(self._passed, self._total)
 
     def explainAll(self, name: str) -> None:
         """ Explains the collection of test groups without executing any of them,
         can also be narrowed to explain a specific test.
         """
-        self._printSetup(name)
+        printSetup(name)
         for g in self._groups:
             g.explainAll()
-        TestSuite._printFinal(self, explain=True)
+        printFinal(self._passed, self._total, explain=True)
 
     def explainOne(self, name: str, testName: str) -> None:
         """ Explain a single test """
-        self._printSetup(name)
+        printSetup(name)
         for g in self._groups:
             if g.explainTest(name):
-                TestSuite._printFinal(self, explain=True)
+                printFinal(self._total, explain=True)
                 return
         # TODO: couldn't find test
-        TestSuite._printFinal(self, explain=True, testName=testName, notFound=True)
+        printFinal(self._passed, self._total, explain=True, testName=testName,
+                notFound=True)
 
     def teardown(self, removeAll = True) -> None:
         """ Cleans up any remaining files that are not wanted. """
