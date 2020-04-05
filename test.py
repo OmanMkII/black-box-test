@@ -20,87 +20,32 @@ import sys
 # Usage
 USAGE = "usage: python3 test.py [test <name> | explain [test]]"
 
-# Test path (usually ./)
-PATH = "./"
-SPACE = " "
-
 # Application exec
-EXEC_1 = PATH + "example"
-EXEC_2 = PATH + "correct"
+ASS1 = "../a1-bark/bark"
 
-NAME = "Basic test demo:"
+ASS3_HUB = "../a3-hub/2310hub"
+ASS3_ALICE = "../a3-hub/2310alice"
+ASS3_BOB = "../a3-hub/2310bob"
+
+ASS4 = "../a4-depot/2310depot"
+
+MAKE = "cd ..; make"
+
+NAME = "UQ CSSE2310 (2019) Assignments 1, 3, & 4."
 
 # Test bodies
 
-class TestFlawedExample(TestGroup):
+class TestAssignment1Example(TestGroup):
 
-    TEST_NAME = "FlawedExample"
+    TEST_NAME = "Assignment1"
 
     tests = [
         # 1
         TestCase("{}.{}".format(TEST_NAME, "TestEmptyStdin"),
-            "{}".format(EXEC_1), 500,
+            "{}".format(ASS1), 500,
             errno=1,
             stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 2
-        TestCase("{}.{}".format(TEST_NAME, "TestExcessStdin"),
-            "{} sum 1 2 3".format(EXEC_1), 500,
-            errno=1,
-            stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 3
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArg"),
-            "{} pow 1 2".format(EXEC_1), 500,
-            errno=2,
-            stdout="tests/empty.out",
-            stderr="tests/mode.err"),
-        # 4
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArgType"),
-            "{} diff a b".format(EXEC_1), 500,
-            errno=3,
-            stdout="tests/empty.out",
-            stderr="tests/args.err"),
-        # 5
-        TestCase("{}.{}".format(TEST_NAME, "TestSum1"),
-            "{} sum 1 2".format(EXEC_1), 500,
-            stdout="tests/sum1.out",
-            stderr="tests/empty.err"),
-        # 6
-        TestCase("{}.{}".format(TEST_NAME, "TestSum2"),
-            "{} sum 2 0".format(EXEC_1), 500,
-            stdout="tests/sum2.out",
-            stderr="tests/empty.err"),
-        # 7
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff1"),
-            "{} diff 4 2".format(EXEC_1), 500,
-            stdout="tests/diff1.out",
-            stderr="tests/empty.err"),
-        # 8
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff2"),
-            "{} diff 2 4".format(EXEC_1), 500,
-            stdout="tests/diff2.out",
-            stderr="tests/empty.err"),
-        # 9
-        TestCase("{}.{}".format(TEST_NAME, "TestMult1"),
-            "{} mult 2 2".format(EXEC_1), 500,
-            stdout="tests/mult1.out",
-            stderr="tests/empty.err"),
-        # 10
-        TestCase("{}.{}".format(TEST_NAME, "TestMult2"),
-            "{} mult 2 0".format(EXEC_1), 500,
-            stdout="tests/mult2.out",
-            stderr="tests/empty.err"),
-        # 11
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv1"),
-            "{} div 4 2".format(EXEC_1), 500,
-            stdout="tests/div1.out",
-            stderr="tests/empty.err"),
-        # 12
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv2"),
-            "{} div 4 0".format(EXEC_1), 500,
-            stdout="tests/div2.out",
-            stderr="tests/div0.err")
+            stderr="tests/usage.err")
     ]
 
     def __init__(self, name, tests):
@@ -112,75 +57,39 @@ class TestFlawedExample(TestGroup):
         return super().runAll()
 
 
-class TestCorrectExample(TestGroup):
+class TestAssignmentExample(TestGroup):
 
-    TEST_NAME = "CorrectExample"
+    TEST_NAME = "Assignment3"
 
     tests = [
         # 1
         TestCase("{}.{}".format(TEST_NAME, "TestEmptyStdin"),
-            "{}".format(EXEC_2), 500,
+            "{}".format(ASS3_HUB), 500,
             errno=1,
             stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 2
-        TestCase("{}.{}".format(TEST_NAME, "TestExcessStdin"),
-            "{} sum 1 2 3".format(EXEC_2), 500,
+            stderr="tests/usage.err")
+    ]
+
+    def __init__(self, name, tests):
+        # Compile all tests
+        super().__init__(name, tests)
+
+    def runAll(self):
+        # Execute, return results
+        return super().runAll()
+
+
+class TestAssignment4Example(TestGroup):
+
+    TEST_NAME = "Assignment4"
+
+    tests = [
+        # 1
+        TestCase("{}.{}".format(TEST_NAME, "TestEmptyStdin"),
+            "{}".format(ASS4), 500,
             errno=1,
             stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 3
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArg"),
-            "{} pow 1 2".format(EXEC_2), 500,
-            errno=2,
-            stdout="tests/empty.out",
-            stderr="tests/mode.err"),
-        # 4
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArgType"),
-            "{} diff a b".format(EXEC_2), 500,
-            errno=3,
-            stdout="tests/empty.out",
-            stderr="tests/args.err"),
-        # 5
-        TestCase("{}.{}".format(TEST_NAME, "TestSum1"),
-            "{} sum 1 2".format(EXEC_2), 500,
-            stdout="tests/sum1.out",
-            stderr="tests/empty.err"),
-        # 6
-        TestCase("{}.{}".format(TEST_NAME, "TestSum2"),
-            "{} sum 2 0".format(EXEC_2), 500,
-            stdout="tests/sum2.out",
-            stderr="tests/empty.err"),
-        # 7
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff1"),
-            "{} diff 4 2".format(EXEC_2), 500,
-            stdout="tests/diff1.out",
-            stderr="tests/empty.err"),
-        # 8
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff2"),
-            "{} diff 2 4".format(EXEC_2), 500,
-            stdout="tests/diff2.out",
-            stderr="tests/empty.err"),
-        # 9
-        TestCase("{}.{}".format(TEST_NAME, "TestMult1"),
-            "{} mult 2 2".format(EXEC_2), 500,
-            stdout="tests/mult1.out",
-            stderr="tests/empty.err"),
-        # 10
-        TestCase("{}.{}".format(TEST_NAME, "TestMult2"),
-            "{} mult 2 0".format(EXEC_2), 500,
-            stdout="tests/mult2.out",
-            stderr="tests/empty.err"),
-        # 11
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv1"),
-            "{} div 4 2".format(EXEC_2), 500,
-            stdout="tests/div1.out",
-            stderr="tests/empty.err"),
-        # 12
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv2"),
-            "{} div 4 0".format(EXEC_2), 500,
-            stdout="tests/div2.out",
-            stderr="tests/div0.err")
+            stderr="tests/usage.err")
     ]
 
     def __init__(self, name, tests):
@@ -197,12 +106,17 @@ if __name__ == '__main__':
     # TODO: name appropriately
     name = "Example Test Suite"
     # TODO: Assemble your test groups
-    exampleFlawed = TestFlawedExample("FlawedExample", TestFlawedExample.tests)
-    exampleCorrect = TestCorrectExample("CorrectExample", TestCorrectExample.tests)
+    Assignment1 = TestAssignment1Example("Assignment1",
+            TestAssignment1Example.tests)
+    Assignment3 = TestAssignment3Example("Assignment3",
+            TestAssignment3Example.tests)
+    Assignment4 = TestAssignment4Example("Assignment4",
+            TestAssignment4Example.tests)
     # TODO: Collect into a runner
     runner = TestSuite([
-        exampleFlawed,
-        exampleCorrect
+        Assignment1,
+        Assignment3,
+        Assignment4
     ])
     # Check the mode
     # print("argc: {}, argv: {}".format(len(sys.argv), sys.argv))
