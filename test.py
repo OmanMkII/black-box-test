@@ -18,7 +18,8 @@ from suite import *
 import sys
 
 # Usage
-USAGE = "usage: python3 test.py [test <name> | explain [test]]"
+# USAGE = "usage: python3 test.py [test <name> | explain [test]]"
+USAGE = "usage: python3 test.py [explain]"
 
 # Test path (usually ./)
 PATH = "./"
@@ -216,19 +217,20 @@ if __name__ == '__main__':
     elif sys.argv[1].lower() == "explain":
         if len(sys.argv) == 2:
             runner.explainAll(name)
-        elif len(sys.argv) == 3:
-            runner.explainOne(name, sys.argv[2])
+        # elif len(sys.argv) == 3:
+        #     runner.explainOne(name, sys.argv[2])
         else:
             print(USAGE)
     elif sys.argv[1].lower() == "test":
-        if len(sys.argv) == 3:
-            # Run all tests (main use)
-            if runner.setup(name, MAKEFILE):
-                # Compiled, can run
-                runner.runOne(name, sys.argv[2])
-            # Clean up afterwards
-            runner.teardown()
-        else:
-            print(USAGE)
+        # if len(sys.argv) == 3:
+        #     # Run all tests (main use)
+        #     if runner.setup(name, MAKEFILE):
+        #         # Compiled, can run
+        #         runner.runOne(name, sys.argv[2])
+        #     # Clean up afterwards
+        #     runner.teardown()
+        # else:
+        #     print(USAGE)
+        print(USAGE)
     else:
         print(USAGE)
