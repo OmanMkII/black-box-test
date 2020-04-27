@@ -18,8 +18,7 @@ from suite import *
 import sys
 
 # Usage
-# USAGE = "usage: python3 test.py [test <name> | explain [test]]"
-USAGE = "usage: python3 test.py [explain]"
+USAGE = "usage: python3 test.py [test <name> | explain [test]]"
 
 # Test path (usually ./)
 PATH = "./"
@@ -188,9 +187,13 @@ class TestCorrectExample(TestGroup):
         # Compile all tests
         super().__init__(name, tests)
 
-    def runAll(self):
+    def runAll(name):
         # Execute, return results
         return super().runAll()
+
+    def runOne(name, test):
+        # Execute, return results
+        return super().runOne(test)
 
 
 # Main
@@ -206,7 +209,6 @@ if __name__ == '__main__':
         exampleCorrect
     ])
     # Check the mode
-    # print("argc: {}, argv: {}".format(len(sys.argv), sys.argv))
     if len(sys.argv) == 1:
         # Run all tests (main use)
         if runner.setup(name, MAKEFILE):
@@ -217,20 +219,19 @@ if __name__ == '__main__':
     elif sys.argv[1].lower() == "explain":
         if len(sys.argv) == 2:
             runner.explainAll(name)
-        # elif len(sys.argv) == 3:
-        #     runner.explainOne(name, sys.argv[2])
+        elif len(sys.argv) == 3:
+            runner.explainOne(name, sys.argv[2])
         else:
             print(USAGE)
     elif sys.argv[1].lower() == "test":
-        # if len(sys.argv) == 3:
-        #     # Run all tests (main use)
-        #     if runner.setup(name, MAKEFILE):
-        #         # Compiled, can run
-        #         runner.runOne(name, sys.argv[2])
-        #     # Clean up afterwards
-        #     runner.teardown()
-        # else:
-        #     print(USAGE)
-        print(USAGE)
+        if len(sys.argv) == 3:
+            # Run all tests (main use)
+            if runner.setup(name, MAKEFILE):
+                # Compiled, can run
+                runner.runOne(name, sys.argv[2])
+            # Clean up afterwards
+            runner.teardown()
+        else:
+            print(USAGE)
     else:
         print(USAGE)

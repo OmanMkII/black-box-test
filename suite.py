@@ -19,6 +19,8 @@ import os
 
 from colorama import Fore, Style
 
+from typecheck import strict_types
+
 VERSION = "1.1"
 
 # Static environment types (expand later if necessary)
@@ -83,6 +85,19 @@ class TestCase():
         self._output = "{}.out".format(self._name)
         self._errlog = "{}.err".format(self._name)
 
+    def getName(self):
+        """ Returns the title of this test. """
+        return self._name
+
+    def getStdout(self):
+        return self._stdout
+
+    def getStderr(self):
+        return self._stderr
+
+    def getStatus(self):
+        return self._status
+
     def _testStdout(self) -> bool:
         """ Tests the stdout saved to local files. """
         with open(self._output, "r") as stdout, open(self._stdout, "r") as expected:
@@ -136,6 +151,16 @@ class TestCase():
         print("  diff {} {}".format(self._errlog, self._stderr))
         print("\n  Expects exit code {}.\n\n".format(self._errno))
 
+    def printActual(self, statusFlag: int):
+        if statusFlag == 1:
+            with open(self._output) as out:
+                print(out.read())
+        elif statusFlag == 2:
+            with open(self._errlog) as err:
+                print(err.read())
+        else:
+            print("Error: invalid statis flag {}".format(statusFlag))
+
     def teardown(self) -> None:
         """ Destroys local copies unless explicitly labelled to save. """
         if self.teardown:
@@ -152,47 +177,60 @@ class TestGroup:
     """
 
     _name = None
-    _tests = [None]
+    _tests = {None}
     _results = [None]
 
     def __init__(self, name, tests):
         self._name = name
-        self._tests = tests
+        self._tests = { t.getName() : t for t in tests }
         self._results = [None for _ in tests]
 
     def __iter__(self):
         return self._tests.__iter__()
 
+    def getName(self):
+        return self._name
+
+    def getTests(self):
+        return self._tests
+
+    def getNames(self):
+        return self._tests.keys()
+
+    def getResults(self):
+        return self._results
+
     def runAll(self) -> []:
         """ Execute all existing tests and stores data locally. """
-        for i, test in enumerate(self._tests):
+        for i, (name, test) in enumerate(self._tests.items()):
             self._results[i] = test.run()
         return self._tests
 
+    @strict_types
     def runTest(self, name: str) -> bool:
         """ Run a specific test that matches the given name. """
         test = None
         for t in self._tests:
             print(t.name())
-            if t._name.split()[1] == name:
-                t.run()
-                test = t
+            if t.name().split()[1] == name:
+                test = t.run()
         return test
 
     def explainAll(self) -> None:
         """ Explains every test within this group, letting the user understand
         what exactly happens when they run.
         """
-        for test in self._tests:
+        for (name, test) in self._tests.items():
             test.explain()
 
+    @strict_types
     def explainTest(self, name: str) -> bool:
         """ Explains a specific test within the main group of tests, giving the
         user a way to replicate parts of it without running this module, returns
         True iff the called test exists and was successfuly explained.
         """
-        for test in self._tests:
-            if test._name == name:
+        for (name, test) in self._tests.items():
+            if test.name() == name:
                 test.explain()
                 return True
         return False
@@ -228,8 +266,9 @@ class TestSuite:
         self._total = 0
         for i, t in enumerate(groups):
             self._groups[i] = t
-            self._total += len(t._tests)
+            self._total += len(t.getTests())
 
+    @strict_types
     def _printSetup(self, name: str, size: int = 80) -> None:
         """ Prints a (semi) fancy welcome and description. """
         print("-" * size)
@@ -237,11 +276,12 @@ class TestSuite:
                 + "\nAuthor: Eamon O'Brien\nVersion: " + VERSION)
         print("-" * size)
 
-    def _printResultLine(self, testName, result, dump,
+    @strict_types
+    def _printResultLine(self, test: TestCase, result, dump, outputFlag,
             size: int = 80, isErrno: bool = False) -> None:
         """ Prints the result of the test neatly with an error dump if given. """
         # spaced pass/fail
-        output = testName + " " * (size - len(testName) - len(result) - 2)
+        output = test.getName() + " " * (size - len(test.getName()) - len(result) - 2)
         output += TestSuite.RESULTS.get(result)
         print(output)
         # print relevant results
@@ -253,21 +293,23 @@ class TestSuite:
             with open(dump, "r") as d:
                 print("  Expected:", d.read())
 
+    @strict_types
     def _printTestResult(self, result: TestCase) -> None:
         """ Checks stdout, stderr, and exit code to ensure the program was run
         correctly.
         """
         if not result._testStderr():
-            TestSuite._printResultLine(self, result._name, "FAIL.", result._stderr)
+            TestSuite._printResultLine(self, result, "FAIL.", result.getStderr(), 1)
         elif not result._testStdout():
-            TestSuite._printResultLine(self, result._name, "FAIL.", result._stdout)
+            TestSuite._printResultLine(self, result, "FAIL.", result.getStdout(), 2)
         elif not result._testErrno():
-            TestSuite._printResultLine(self, result._name, "FAIL.",
-                result._status, isErrno = True)
+            TestSuite._printResultLine(self, result, "FAIL.",
+                result.getStatus(), 3, isErrno = True)
         else:
             self._passed += 1
-            TestSuite._printResultLine(self, result._name, "PASS!", None)
+            TestSuite._printResultLine(self, result, "PASS!", None, 3)
 
+    @strict_types
     def _printFinal(self, size: int = 80, explain: bool = False,
             testName: str = None, notFound: bool = False) -> None:
         """ Print a summary of the test results. """
@@ -282,6 +324,7 @@ class TestSuite:
                 print("\n  {} tests explained: NO TESTS WERE RUN.\n".format(self._total))
         print("-" * size)
 
+    @strict_types
     def setup(self, name, type) -> bool:
         """ Sets up the environment with commands such as 'make [option]'. """
         self._printSetup(name)
@@ -306,42 +349,38 @@ class TestSuite:
                 subprocess.call([REMOVE, "makelog", "errlog", "output"])
                 return False
 
+    @strict_types
     def runAll(self, name: str) -> None:
         """ Executes the collection of tests and stores all results for a pretty
         output to the terminal.
         """
         # TODO: add an option to save test results/output to shell
-        results = []
+        results = {}
         j = 0
-        for i, t in enumerate(self._groups):
+        for i, g in enumerate(self._groups):
             # TODO: put results in ./deleteme instead
-            results.extend(t.runAll())
-            while j < len(results):
-                TestSuite._printTestResult(self, results[j])
-                # results[j].teardown()
-                j += 1
+            results.update(g.runAll())
+        for (result, test) in results.items():
+            TestSuite._printTestResult(self, test)
         TestSuite._printFinal(self)
 
+    @strict_types
     def runOne(self, name: str, testName: str) -> None:
         """ Executes a specific test, or prints fail if it cannot be found. """
-        group, name = testName.split(".")
-        contains = False
-        # Find test
-        test = None
+        test, result = None, None
         for g in self._groups:
-            # print("g._name: {}\ntestName: {}\nname: {}".format(g._name, testName, name))
-            print(g, g._tests)
-            if g._name == group and testName in g._tests:
-                test = g.runTest(name)
-        # Print test results
+            names = g.getNames()
+            if testName in names:
+                test = g.getTests().get(testName)
+                result = g.runOne(test)
+                TestSuite._printTestResult(self, result)
+        # TODO: couldn't find test
         if test is None:
-            # print("Was None")
-            return None
+            TestSuite._printFinal(self, testName=testName, notFound=True)
         else:
-            # print("Got something")
-            TestSuite._printTestResult(self, contains)
-            TestSuite._printFinal()
+            TestSuite._printFinal(self, testName=testName)
 
+    @strict_types
     def explainAll(self, name: str) -> None:
         """ Explains the collection of test groups without executing any of them,
         can also be narrowed to explain a specific test.
@@ -351,15 +390,22 @@ class TestSuite:
             g.explainAll()
         TestSuite._printFinal(self, explain=True)
 
+    @strict_types
     def explainOne(self, name: str, testName: str) -> None:
         """ Explain a single test """
         self._printSetup(name)
+        result = None
         for g in self._groups:
-            if g.explainTest(name):
+            result = g.explainTest(name)
+            if result:
                 TestSuite._printFinal(self, explain=True)
                 return
         # TODO: couldn't find test
-        TestSuite._printFinal(self, explain=True, testName=testName, notFound=True)
+        if result is None:
+            print("Caught lost test")
+            TestSuite._printFinal(self, explain=True, testName=testName, notFound=True)
+        else:
+            TestSuite._printFinal(self, explain=True, testName=testName)
 
     def teardown(self, removeAll = True) -> None:
         """ Cleans up any remaining files that are not wanted. """
@@ -368,6 +414,8 @@ class TestSuite:
                 stderr=open("errlog", "w"))
         subprocess.call([REMOVE, "makelog", "errlog"])
         # Remove all outputs
+        REMOVE_OUTPUTS = "rm *.out *.err"
         if removeAll:
-            for g in self._groups:
-                g.teardownAll()
+            subprocess.call(REMOVE_OUTPUTS, shell=True,
+                    stdout=open("/dev/null", "w"),
+                    stderr=open("/dev/null", "w"))
