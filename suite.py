@@ -18,7 +18,6 @@ import filecmp
 import os
 
 from colorama import Fore, Style
-
 from typecheck import strict_types
 
 VERSION = "1.2"
@@ -230,7 +229,7 @@ class TestGroup:
         True iff the called test exists and was successfuly explained.
         """
         for (name, test) in self._tests.items():
-            if test.name() == name:
+            if test.getName() == name:
                 test.explain()
                 return True
         return False
