@@ -21,7 +21,7 @@ from colorama import Fore, Style
 
 from typecheck import strict_types
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 # Static environment types (expand later if necessary)
 MAKEFILE = "make"
