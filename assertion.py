@@ -4,6 +4,12 @@ to allow for it to be executed and then assertions made based on if certain part
 of it are indeed relevant.
 """
 
+"""
+TODO: move all here to be decorators of the core @TestCase class.
+
+see: https://realpython.com/primer-on-python-decorators/
+"""
+
 GET_ERRNO = "echo $?"
 FILE_CMP = "cmp {} {}\n"
 
@@ -41,6 +47,7 @@ def assert_equal_stderr(test: TestCase, expected: str):
     else:
         return False
 
+@strict_types
 def assert_correct_errno(test: TestCase, errno: int):
     """ Asserts the given errno is correct """
     return test.getErrno() == errno

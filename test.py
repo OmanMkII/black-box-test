@@ -38,69 +38,69 @@ class TestFlawedExample(TestGroup):
 
     tests = [
         # 1
-        TestCase("{}.{}".format(TEST_NAME, "TestEmptyStdin"),
-            "{}".format(EXEC_1), 500,
-            errno=1,
-            stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 2
-        TestCase("{}.{}".format(TEST_NAME, "TestExcessStdin"),
-            "{} sum 1 2 3".format(EXEC_1), 500,
-            errno=1,
-            stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 3
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArg"),
-            "{} pow 1 2".format(EXEC_1), 500,
-            errno=2,
-            stdout="tests/empty.out",
-            stderr="tests/mode.err"),
-        # 4
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArgType"),
-            "{} diff a b".format(EXEC_1), 500,
-            errno=3,
-            stdout="tests/empty.out",
-            stderr="tests/args.err"),
-        # 5
-        TestCase("{}.{}".format(TEST_NAME, "TestSum1"),
-            "{} sum 1 2".format(EXEC_1), 500,
-            stdout="tests/sum1.out",
-            stderr="tests/empty.err"),
-        # 6
-        TestCase("{}.{}".format(TEST_NAME, "TestSum2"),
-            "{} sum 2 0".format(EXEC_1), 500,
-            stdout="tests/sum2.out",
-            stderr="tests/empty.err"),
-        # 7
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff1"),
-            "{} diff 4 2".format(EXEC_1), 500,
-            stdout="tests/diff1.out",
-            stderr="tests/empty.err"),
-        # 8
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff2"),
-            "{} diff 2 4".format(EXEC_1), 500,
-            stdout="tests/diff2.out",
-            stderr="tests/empty.err"),
-        # 9
-        TestCase("{}.{}".format(TEST_NAME, "TestMult1"),
-            "{} mult 2 2".format(EXEC_1), 500,
-            stdout="tests/mult1.out",
-            stderr="tests/empty.err"),
-        # 10
-        TestCase("{}.{}".format(TEST_NAME, "TestMult2"),
-            "{} mult 2 0".format(EXEC_1), 500,
-            stdout="tests/mult2.out",
-            stderr="tests/empty.err"),
-        # 11
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv1"),
-            "{} div 4 2".format(EXEC_1), 500,
-            stdout="tests/div1.out",
-            stderr="tests/empty.err"),
-        # 12
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv2"),
-            "{} div 4 0".format(EXEC_1), 500,
-            stdout="tests/div2.out",
-            stderr="tests/div0.err")
+        # TestCase("{}.{}".format(TEST_NAME, "TestEmptyStdin"),
+        #     "{}".format(EXEC_1), 500,
+        #     errno=1,
+        #     stdout="tests/empty.out",
+        #     stderr="tests/usage.err"),
+        # # 2
+        # TestCase("{}.{}".format(TEST_NAME, "TestExcessStdin"),
+        #     "{} sum 1 2 3".format(EXEC_1), 500,
+        #     errno=1,
+        #     stdout="tests/empty.out",
+        #     stderr="tests/usage.err"),
+        # # 3
+        # TestCase("{}.{}".format(TEST_NAME, "TestBadArg"),
+        #     "{} pow 1 2".format(EXEC_1), 500,
+        #     errno=2,
+        #     stdout="tests/empty.out",
+        #     stderr="tests/mode.err"),
+        # # 4
+        # TestCase("{}.{}".format(TEST_NAME, "TestBadArgType"),
+        #     "{} diff a b".format(EXEC_1), 500,
+        #     errno=3,
+        #     stdout="tests/empty.out",
+        #     stderr="tests/args.err"),
+        # # 5
+        # TestCase("{}.{}".format(TEST_NAME, "TestSum1"),
+        #     "{} sum 1 2".format(EXEC_1), 500,
+        #     stdout="tests/sum1.out",
+        #     stderr="tests/empty.err"),
+        # # 6
+        # TestCase("{}.{}".format(TEST_NAME, "TestSum2"),
+        #     "{} sum 2 0".format(EXEC_1), 500,
+        #     stdout="tests/sum2.out",
+        #     stderr="tests/empty.err"),
+        # # 7
+        # TestCase("{}.{}".format(TEST_NAME, "TestDiff1"),
+        #     "{} diff 4 2".format(EXEC_1), 500,
+        #     stdout="tests/diff1.out",
+        #     stderr="tests/empty.err"),
+        # # 8
+        # TestCase("{}.{}".format(TEST_NAME, "TestDiff2"),
+        #     "{} diff 2 4".format(EXEC_1), 500,
+        #     stdout="tests/diff2.out",
+        #     stderr="tests/empty.err"),
+        # # 9
+        # TestCase("{}.{}".format(TEST_NAME, "TestMult1"),
+        #     "{} mult 2 2".format(EXEC_1), 500,
+        #     stdout="tests/mult1.out",
+        #     stderr="tests/empty.err"),
+        # # 10
+        # TestCase("{}.{}".format(TEST_NAME, "TestMult2"),
+        #     "{} mult 2 0".format(EXEC_1), 500,
+        #     stdout="tests/mult2.out",
+        #     stderr="tests/empty.err"),
+        # # 11
+        # TestCase("{}.{}".format(TEST_NAME, "TestDiv1"),
+        #     "{} div 4 2".format(EXEC_1), 500,
+        #     stdout="tests/div1.out",
+        #     stderr="tests/empty.err"),
+        # # 12
+        # TestCase("{}.{}".format(TEST_NAME, "TestDiv2"),
+        #     "{} div 4 0".format(EXEC_1), 500,
+        #     stdout="tests/div2.out",
+        #     stderr="tests/div0.err")
     ]
 
     def __init__(self, name, tests):
@@ -113,70 +113,13 @@ class TestCorrectExample(TestGroup):
     TEST_NAME = "CorrectExample"
 
     tests = [
-        # 1
-        TestCase("{}.{}".format(TEST_NAME, "TestEmptyStdin"),
-            "{}".format(EXEC_2), 500,
-            errno=1,
-            stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 2
-        TestCase("{}.{}".format(TEST_NAME, "TestExcessStdin"),
-            "{} sum 1 2 3".format(EXEC_2), 500,
-            errno=1,
-            stdout="tests/empty.out",
-            stderr="tests/usage.err"),
-        # 3
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArg"),
-            "{} pow 1 2".format(EXEC_2), 500,
-            errno=2,
-            stdout="tests/empty.out",
-            stderr="tests/mode.err"),
-        # 4
-        TestCase("{}.{}".format(TEST_NAME, "TestBadArgType"),
-            "{} diff a b".format(EXEC_2), 500,
-            errno=3,
-            stdout="tests/empty.out",
-            stderr="tests/args.err"),
-        # 5
-        TestCase("{}.{}".format(TEST_NAME, "TestSum1"),
-            "{} sum 1 2".format(EXEC_2), 500,
-            stdout="tests/sum1.out",
-            stderr="tests/empty.err"),
-        # 6
-        TestCase("{}.{}".format(TEST_NAME, "TestSum2"),
-            "{} sum 2 0".format(EXEC_2), 500,
-            stdout="tests/sum2.out",
-            stderr="tests/empty.err"),
-        # 7
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff1"),
-            "{} diff 4 2".format(EXEC_2), 500,
-            stdout="tests/diff1.out",
-            stderr="tests/empty.err"),
-        # 8
-        TestCase("{}.{}".format(TEST_NAME, "TestDiff2"),
-            "{} diff 2 4".format(EXEC_2), 500,
-            stdout="tests/diff2.out",
-            stderr="tests/empty.err"),
-        # 9
-        TestCase("{}.{}".format(TEST_NAME, "TestMult1"),
-            "{} mult 2 2".format(EXEC_2), 500,
-            stdout="tests/mult1.out",
-            stderr="tests/empty.err"),
-        # 10
-        TestCase("{}.{}".format(TEST_NAME, "TestMult2"),
-            "{} mult 2 0".format(EXEC_2), 500,
-            stdout="tests/mult2.out",
-            stderr="tests/empty.err"),
-        # 11
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv1"),
-            "{} div 4 2".format(EXEC_2), 500,
-            stdout="tests/div1.out",
-            stderr="tests/empty.err"),
-        # 12
-        TestCase("{}.{}".format(TEST_NAME, "TestDiv2"),
-            "{} div 4 0".format(EXEC_2), 500,
-            stdout="tests/div2.out",
-            stderr="tests/div0.err")
+        # 1 !! Model Test Case For 2.0 !!
+        TestEmptyStdin = TestCase()
+        # maybe try/catch, throw Error('exactly what went wrong') ??
+        # catch { print('failed because x, y') } ??
+        assert_equal_stderr(TestEmptyStdin, 'correct file')
+        assert_equal_stdour(TestEmptyStdin, 'correct file')
+        assert_correct_errno(TestEmptyStdin, 'correct errno')
     ]
 
     def __init__(self, name, tests):
