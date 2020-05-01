@@ -20,7 +20,7 @@ import os
 from colorama import Fore, Style
 from typecheck import strict_types
 
-VERSION = "1.2"
+VERSION = "2.0"
 
 # Static environment types (expand later if necessary)
 MAKEFILE = "make"
@@ -49,40 +49,35 @@ class TestCase():
     In the case that no files are selected for stdout/stderr, the test will presume
     them irrelevant - for cases where no output is expected, please use an empty
     file.
+
+    v2.0: No longer stores expected data, uses external functions to assert that
+          outputs are as expected.
     """
 
     # Information
     _name = None
 
     # Input/Output
-    _testStdin = None
-    _status = None
-
-    # Expected Data
+    _stdin = None
     _stdout = None
     _stderr = None
+    _status = None
 
     # Cleanup flags
     _teardown = None
 
-    def __init__(self, name: str, input: str, timeout: int, stdin: str = None,
-            errno: int = 0, stdout: str = "/dev/null", stderr: str = "/dev/null"):
+    def __init__(self, name: str, input: str, timeout: int, stdin: str = None):
         """ Sets up the test case by initialising inputs and outputs relying on
         third party text inputs, prepping the suite to compare input and outputs
         for this case.
         """
         self._name = name
         self._stdin = stdin
-        # Expected
-        self._input = input
-        self._errno = errno
-        self._stdout = stdout
-        self._stderr = stderr
         # Actual
-        self._status = -1
+        self._status = None
         # TODO: put results in ./deleteme instead
-        self._output = "{}.out".format(self._name)
-        self._errlog = "{}.err".format(self._name)
+        self._output = "deleteme/{}.out".format(self._name)
+        self._errlog = "deleteme/{}.err".format(self._name)
 
     def getName(self):
         """ Returns the title of this test. """
@@ -97,33 +92,9 @@ class TestCase():
     def getStatus(self):
         return self._status
 
-    def _testStdout(self) -> bool:
-        """ Tests the stdout saved to local files. """
-        with open(self._output, "r") as stdout, open(self._stdout, "r") as expected:
-            if stdout.read() != expected.read():
-                return False
-            else:
-                return True
-
-    def _testStderr(self) -> bool:
-        """ Tests the stderr saved to local files. """
-        with open(self._errlog, "r") as stderr, open(self._stderr, "r") as expected:
-            if stderr.read() != expected.read():
-                return False
-            else:
-                return True
-
-    def _testErrno(self) -> bool:
-        """ Tests the final exit code. """
-        if self._errno != self._status:
-            print("\tIncorrect exit code:", self._status)
-            return False
-        else:
-            return True
-
     def run(self) -> None:
         """ Executes the script locally and saves all I/O to be tested later. """
-        p = subprocess.Popen(self._input.split(),
+        p = subprocess.run(self._input.split(),
                 stdout=open(self._output, "a"),
                 stderr=open(self._errlog, "a"))
         output, error = p.communicate()
@@ -150,15 +121,16 @@ class TestCase():
         print("  diff {} {}".format(self._errlog, self._stderr))
         print("\n  Expects exit code {}.\n\n".format(self._errno))
 
-    def printActual(self, statusFlag: int):
-        if statusFlag == 1:
-            with open(self._output) as out:
-                print(out.read())
-        elif statusFlag == 2:
-            with open(self._errlog) as err:
-                print(err.read())
-        else:
-            print("Error: invalid statis flag {}".format(statusFlag))
+    # def printActual(self, statusFlag: int):
+    #     print("Printing outputs")
+    #     if statusFlag == 1:
+    #         with open(self._output) as out:
+    #             print(out.read())
+    #     elif statusFlag == 2:
+    #         with open(self._errlog) as err:
+    #             print(err.read())
+    #     else:
+    #         print("Error: invalid status flag {}".format(statusFlag))
 
     def teardown(self) -> None:
         """ Destroys local copies unless explicitly labelled to save. """
@@ -267,7 +239,6 @@ class TestSuite:
             self._groups[i] = t
             self._total += len(t.getTests())
 
-    @strict_types
     def _printSetup(self, name: str, size: int = 80) -> None:
         """ Prints a (semi) fancy welcome and description. """
         print("-" * size)
@@ -275,7 +246,6 @@ class TestSuite:
                 + "\nAuthor: Eamon O'Brien\nVersion: " + VERSION)
         print("-" * size)
 
-    @strict_types
     def _printResultLine(self, test: TestCase, result, dump, outputFlag,
             size: int = 80, isErrno: bool = False) -> None:
         """ Prints the result of the test neatly with an error dump if given. """
@@ -284,15 +254,24 @@ class TestSuite:
         output += TestSuite.RESULTS.get(result)
         print(output)
         # print relevant results
+        # TODO: correct print about *what* went wrong
+        print(dump, type(dump))
+        with open(test.getStdout()) as out, open(test.getStderr()) as err:
+            print("Stdout: ", out.read())
+            print("Stderr: ", err.read())
+            print(test.getStatus())
+
+        test.printActual(2)
+
         if isErrno:
             # "dump" is actually errno in this case
-            print("\tExited with status {}\n".format(dump))
+            print("\n\tExited with status {}\n".format(dump))
         elif dump is not None:
             # Incorrect outputs
-            with open(dump, "r") as d:
-                print("  Expected:", d.read())
+            with open(dump, "r") as d, open(test.getStderr()) as err:
+                print("  Expected:", d.read().strip('\n'))
+                print("  Actual:", err.read().strip('\n'), "\n")
 
-    @strict_types
     def _printTestResult(self, result: TestCase) -> None:
         """ Checks stdout, stderr, and exit code to ensure the program was run
         correctly.
@@ -308,7 +287,6 @@ class TestSuite:
             self._passed += 1
             TestSuite._printResultLine(self, result, "PASS!", None, 3)
 
-    @strict_types
     def _printFinal(self, size: int = 80, explain: bool = False,
             testName: str = None, notFound: bool = False) -> None:
         """ Print a summary of the test results. """

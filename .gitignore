@@ -1,5 +1,9 @@
 # --- C Git Ignore ---
 
+# Actuals:
+example
+correct
+
 # Prerequisites
 *.d
 

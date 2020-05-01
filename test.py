@@ -107,10 +107,6 @@ class TestFlawedExample(TestGroup):
         # Compile all tests
         super().__init__(name, tests)
 
-    def runAll(self):
-        # Execute, return results
-        return super().runAll()
-
 
 class TestCorrectExample(TestGroup):
 
@@ -186,14 +182,6 @@ class TestCorrectExample(TestGroup):
     def __init__(self, name, tests):
         # Compile all tests
         super().__init__(name, tests)
-
-    def runAll(name):
-        # Execute, return results
-        return super().runAll()
-
-    def runOne(name, test):
-        # Execute, return results
-        return super().runOne(test)
 
 
 # Main
