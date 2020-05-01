@@ -4,8 +4,14 @@ to allow for it to be executed and then assertions made based on if certain part
 of it are indeed relevant.
 """
 
-FILE_CMP = "cmp {} {}\n"
 GET_ERRNO = "echo $?"
+FILE_CMP = "cmp {} {}\n"
+
+@strict_types
+def retrieve_errno(test: TestCase):
+""" Retrieves the error number output from the last run command. """
+output = subprocess.run(GET_ERRNO.split(), shell=True, stdout=subprocess.PIPE)
+return output.stdout.decode('utf-8')
 
 @strict_types
 def assert_equal_stdout(test: TestCase, expected: str):
@@ -35,9 +41,6 @@ def assert_equal_stderr(test: TestCase, expected: str):
     else:
         return False
 
-@strict_types
-def retrieve_errno(test: TestCase):
-    """ Retrieves the error number output from the last run command. """
-    subprocess.Popen(GET_ERRNO.split(), shell=True)
-
-    return None
+def assert_correct_errno(test: TestCase, errno: int):
+    """ Asserts the given errno is correct """
+    return test.getErrno() == errno

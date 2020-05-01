@@ -1,4 +1,26 @@
+""" Auxilary methods to assist with formating and so forth. """
+
 from typing import get_type_hints
+from colorama import Fore, Style
+
+BOLD = '\033[1m'
+
+colours = {
+    "green": BOLD + f"{Fore.GREEN}",
+    "yellow": BOLD + f"{Fore.YELLOW}",
+    "blue": BOLD + f"{Fore.BLUE}"
+}
+
+def resetFont():
+    """ Reset the font. """
+    print(f"{Style.RESET_ALL}")
+
+def setColour(text: str, colour: str, bold: bool = False):
+    """ Modifies the font to set the correct colour and/or bold """
+    if bold:
+        print(BOLD)
+    print(colours.get(colour.lower()), text)
+    resetFont()
 
 """ Class that forces type inputs to be of declared class. """
 def strict_types(f):

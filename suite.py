@@ -17,7 +17,6 @@ import subprocess
 import filecmp
 import os
 
-from colorama import Fore, Style
 from typecheck import strict_types
 
 VERSION = "2.0"
@@ -34,7 +33,6 @@ GET_ERRNO = "echo $?"                       # get the last exit code (errno)
 
 # Formatting
 SPACE = " "
-BOLD = '\033[1m'
 
 class TestCase():
     """ An instance test case existing within a multitude of tests.
@@ -218,13 +216,6 @@ class TestSuite:
     each output directly to evaluate their outputs.
     """
 
-    # Coloured for your enjoyment
-    RESULTS = {
-        "PASS!": BOLD + f"{Fore.GREEN}PASS!{Style.RESET_ALL}",
-        "FAIL.": BOLD + f"{Fore.YELLOW}FAIL.{Style.RESET_ALL}",
-        "ERROR": BOLD + f"{Fore.BLUE}ERROR{Style.RESET_ALL}"
-    }
-
     # Numbers
     _total = 0
     _passed = 0
@@ -276,6 +267,7 @@ class TestSuite:
         """ Checks stdout, stderr, and exit code to ensure the program was run
         correctly.
         """
+        # Coloured for your enjoyment
         if not result._testStderr():
             TestSuite._printResultLine(self, result, "FAIL.", result.getStderr(), 1)
         elif not result._testStdout():
