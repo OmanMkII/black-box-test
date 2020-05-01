@@ -1,5 +1,9 @@
 # --- C Git Ignore ---
 
+# Main files
+correct
+example
+
 # Prerequisites
 *.d
 
